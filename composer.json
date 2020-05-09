@@ -1,5 +1,5 @@
 {
-    "name": "markwang/commonTools",
+    "name": "markwang/commontools",
     "description": "通用的处理工具类(包含数据表实例自动生成、管道模式处理)",
     "authors": [
         {
