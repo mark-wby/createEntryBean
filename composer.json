@@ -1,0 +1,16 @@
+{
+    "name": "mark/create-entry-bean",
+    "description": "自动从生成数据表实例",
+    "authors": [
+        {
+            "name": "wangbiaoyan",
+            "email": "1377981054@qq.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "MarkWang\\": "src"
+        }
+    }
+}
