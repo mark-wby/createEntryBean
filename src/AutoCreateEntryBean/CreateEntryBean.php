@@ -11,6 +11,10 @@ namespace MarkWang\AutoCreateEntryBean;
 class CreateEntryBean
 {
     /**
+     * @var 实例类的命名空间
+     */
+    protected static $nameSpace;
+    /**
      * @var 数据库表结构
      */
     protected static $tableStructs;
@@ -19,6 +23,14 @@ class CreateEntryBean
      * @var 生成的实例类存放的文件位置
      */
     protected static $targetPath;
+
+    /**
+     * @param 实例类的命名空间 $nameSpace
+     */
+    public static function setNameSpace($nameSpace)
+    {
+        self::$nameSpace = $nameSpace;
+    }
 
     /**
      * @param 生成的实例类存放的文件位置 $targetPath
@@ -48,10 +60,62 @@ class CreateEntryBean
         if(!self::$targetPath){
             throw new \Exception("请设置生成目录");
         }
-        //循环生成
-        foreach (self::$tableStructs as $tableStruct){
-
+        $file = self::parseName(self::$tableStructs[0]["table_name"],2)."Bean";
+        $content = "<?php";
+        if(self::$nameSpace){
+            $content.="
+            
+namespace ".self::$nameSpace.";";
         }
+        $content .="
+        
+class $file
+{";
+        //循环生成字段
+        foreach (self::$tableStructs as $tableStruct){
+            $fieldName = self::parseName($tableStruct["column_name"],1);
+            $comment = $tableStruct["column_comment"];
+            $content.="
+        /**
+         * @var \$$fieldName $comment
+         */
+        protected $".$fieldName.";
+        ";
+        }
+        //循环生成set方法
+        foreach (self::$tableStructs as $tableStruct){
+            $fieldName = self::parseName($tableStruct["column_name"],2);
+            $arg = self::parseName($tableStruct["column_name"],1);
+            $type = self::parseType($tableStruct["data_type"]);
+            $content.="
+        /**
+         * @var $type
+         */
+        public function set".$fieldName."(\$$arg){
+            \$this->$arg=\$$arg;
+        }
+        ";
+        }
+        //循环生成get方法
+        foreach (self::$tableStructs as $tableStruct){
+            $fieldName = self::parseName($tableStruct["column_name"],2);
+            $arg = self::parseName($tableStruct["column_name"],1);
+            $comment = $tableStruct["column_comment"];
+            $type = self::parseType($tableStruct["data_type"]);
+            $content.="
+        /**
+         * @var $comment
+         * @return $type
+         */
+        public function get".$fieldName."(){
+           return \$this->$arg;
+        }
+        ";
+        }
+        $content.="
+}";
+        $fileName = self::$targetPath."/$file.php";
+        file_put_contents($fileName,$content);
     }
 
     /**
@@ -74,6 +138,25 @@ class CreateEntryBean
         }else {
             // 驼峰转下划线
             return strtolower(trim(preg_replace("/[A-Z]/", "_\\0", $name), "_"));
+        }
+    }
+
+    /**
+     * 转换数据库字段类型
+     * @param $type
+     * @return string
+     */
+    public static function parseType($type)
+    {
+        switch ($type){
+            case in_array($type,["int","tinyint","bigint","smallint","mediumint"]):
+                return "int";
+            case in_array($type,["varchar","char","text"]):
+                return "string";
+            case in_array($type,["decimal","float","double"]):
+                return "float";
+            default:
+                return "";
         }
     }
 }
